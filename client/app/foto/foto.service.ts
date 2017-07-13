@@ -1,6 +1,9 @@
-import { Http, Headers } from '@angular/http';
+import { Http, Headers, Response} from '@angular/http';
 import { FotoComponent } from './foto.component';
+import { Observable } from 'rxjs';
+import { Injectable } from '@angular/core';
 
+@Injectable()
 export class FotoService {
 
     http: Http;
@@ -15,32 +18,57 @@ export class FotoService {
     }
 
 
-    cadastra(foto: FotoComponent) {
+    cadastra(foto: FotoComponent): Observable<MensagemCadastro> {
+        if(foto._id) {
 
-        event.preventDefault();
+            return this.http
+                .put(this.url + '/' + foto._id, JSON.stringify(foto), {headers: this.headers})
+                .map(() => new MensagemCadastro('Foto alterada com sucesso', false));
 
-        console.log(this.foto);
+        } else {
 
-        let headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-
-        this.http
-            .post(this.url, JSON.stringify(foto), { headers: this.headers })
-            .subscribe(() => {
-                this.foto = new FotoComponent();
-                console.log('Foto salva com sucesso!');    
-            }, erro => console.log(erro));
-
+            return this.http
+                .post(this.url, JSON.stringify(foto), { headers: this.headers })
+                .map(() => new MensagemCadastro('Foto incluída com sucesso', true));
+                
+        }
     }
 
-    lista() {
+    lista(): Observable<FotoComponent[]>  {
 
-        this.http
-        .get(this.url)
-        .map(res => res.json())
-        .subscribe(fotos => {
-            this.fotos = fotos;
-            console.log(this.fotos);
-        }, erro => console.log(erro));
+        return this.http
+            .get(this.url)
+            .map(res => res.json())
+    
+    }
+
+    remove(foto: FotoComponent){
+
+        return this.http.delete(this.url + '/' + foto._id);
+    }
+
+    buscaPorId(id: string): Observable<FotoComponent> {
+
+        return this.http
+            .get(this.url + '/' + id)
+            .map(res => res.json());
+    }
+}
+
+export class MensagemCadastro {
+
+    constructor(private _mensagem: string, private _inclusao: boolean) {
+        this._mensagem = _mensagem;
+        this._inclusao = _inclusao;
+    }
+
+    get mensagem(): string {
+
+        return this._mensagem;
+    }
+
+    get inclusao(): boolean {
+
+        return this._inclusao;
     }
 }
